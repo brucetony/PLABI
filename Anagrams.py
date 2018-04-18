@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+#Use defaultdict as it easily allows for lists to be created in dict
 def find_anagrams(filePath):
     six_plus_anagrams = []
     eight_letter_anagrams = []
