@@ -22,7 +22,7 @@ nums_list.sort()
 print(nums_list)
 
 #Make list of lists of numbers that only have 1-9
-combos_list = [list(combo) for combo in itertools.combinations(nums_list, 9)]
+# combos_list = [list(combo) for combo in itertools.combinations(nums_list, 9)]
 # for i in range(len(nums_list)):
 #     if list(nums_list[i])[0] == "1":
 #         combo = [nums_list[i]]
@@ -33,6 +33,3 @@ combos_list = [list(combo) for combo in itertools.combinations(nums_list, 9)]
 #         combos_list.append((combo))
 
 
-
-print(combos_list)
-#TODO replace function so that all numbers used
