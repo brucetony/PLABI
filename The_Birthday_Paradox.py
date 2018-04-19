@@ -20,7 +20,7 @@ def birthday_prob(num_students, num_trials):
     k = 0
     trial_results = []
     while k <= num_trials:
-        birthdays = [random.randint(0, 365) for i in range(num_students)]
+        birthdays = [random.randint(0, 364) for i in range(num_students)]
         trial_results.append(has_duplicates(birthdays))
         k += 1
     Trues = 0
