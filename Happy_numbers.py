@@ -46,3 +46,5 @@ for i in range(1, 101):
     if isHappy_recursive(i) is True:
         happy_numbers.append(i)
 print("List of happy nunbers found recursively:", happy_numbers)
+
+# TODO Make duplicate function using sets and lengths
