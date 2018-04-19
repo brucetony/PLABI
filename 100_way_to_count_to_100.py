@@ -18,6 +18,9 @@ def one_hundred():
 one_hundred()
 
 
+#TODO make it more general so you can put in a list of numbers
+
+
 
 
 
