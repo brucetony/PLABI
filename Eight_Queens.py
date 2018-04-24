@@ -31,8 +31,9 @@ def queens(num_queens, all_solns = False):
     counter = 0
     M = len(matrices[0])
     while counter < len(matrices):
-        print(counter)
         trace_values = []
+
+        #First check largest diagonals to quickly skip over
         trace_values.append(np.trace(matrices[counter]))
         trace_values.append(np.trace(np.rot90(matrices[counter])))
         if trace_values[0] > 1 or trace_values[1] > 1:
@@ -85,4 +86,5 @@ def queens(num_queens, all_solns = False):
 
     return positions_lists
 
-print(queens(8))
+solutions = queens(8, all_solns=False)
+print(solutions)
