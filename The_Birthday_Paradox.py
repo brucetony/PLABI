@@ -2,13 +2,7 @@ import random
 
 #First create a function that checks for duplicates in a list
 def has_duplicates(some_list):
-    originals = []
-    for i in some_list:
-        if i in originals:
-            return True
-        else:
-            originals.append(i)
-    return False
+    return False if len(some_list) == len(set(some_list)) else True
 
 #Use duplicate function to check if 2 random days are in list
 def birthday_prob(num_students, num_trials):
@@ -63,5 +57,3 @@ def birthday_prob_3(num_students, num_trials):
         if i is True:
             Trues += 1
     return Trues/len(trial_results)
-
-print("3 people sharing a birthday estimate:", birthday_prob_3(27, 10000))
