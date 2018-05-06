@@ -22,19 +22,9 @@ def dotplot(seqA, seqB, w, s):
         for j in range(N):
             #Create assignments for substring slicing
             startA = int(i-dis)
-            endA = int(i+dis)
+            endA = int(i+dis+1)
             startB = int(j-dis)
-            endB = int(j+dis)
-
-            #In case the window is at the beginning or end
-            if startA < 0:
-                startA = 0
-            if startB < 0:
-                startB = 0
-            if endA > M:
-                endA = M
-            if endB > N:
-                endB = N
+            endB = int(j+dis+1)
 
             #Create the substrings
             subA = seqA[startA:endA]
@@ -51,6 +41,7 @@ def dotplot(seqA, seqB, w, s):
             #Change position to 1 if a match
             if num_matches >= s:
                 dotplot[i, j] = 1
+                #print("suba: {}, subB: {}".format(list(subA), list(subB)))
 
     return dotplot
 
@@ -80,7 +71,7 @@ def dotplt2Ascii(dp, seqA, seqB, heading, filename):
                     outputFile.write('*')
             outputFile.write('\n')
 
-def dotplot2Graphics(dp, hdA, hdB, heading):
+def dotplot2Graphics(dp, hdA, hdB, heading, filename):
     '''
     Uses a numpy dotplot used for comparing two strings and saves it as a figure (.png, .pdf, etc)
     :param dp: Numpy dotplot
@@ -107,14 +98,22 @@ def dotplot2Graphics(dp, hdA, hdB, heading):
     plt.gca().invert_yaxis()
     ax.xaxis.tick_top()
     ax.xaxis.set_label_position('top')
-    plt.xlabel(hdB)
-    plt.ylabel(hdA, rotation=0)
+    plt.xlabel("Second Sequence")
+    plt.ylabel("First Sequence")
 
     plt.title(heading, y=1.15)
-    plt.show()
+    plt.savefig(filename)
+    #plt.show()
 
+def read_seq(inputFile):
+    with open(inputFile, 'r') as seq_file:
+        seq = seq_file.read()
+    return seq
 
 seqA = "peter piper picked a peck of pickled peppers"
 seqB = "a peck of pickled peppers peter piper picked"
 dp = dotplot(seqA, seqB, 5, 4)
-dotplot2Graphics(dp, seqA, seqB, "Peter Piper")
+#dotplt2Ascii(dp, seqA, seqB, "Peter Piper", "BS_peter.txt")
+#dotplot2Graphics(dp, seqA, seqB, "Peter Piper", "bs.pdf")
+plt.imshow(dp, origin='upper', cmap='Greys')
+plt.show()
