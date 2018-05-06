@@ -1,4 +1,7 @@
+# %matplotlib inline #For jupyter notebook
 import numpy as np
+import matplotlib.pylab as plt
+
 np.set_printoptions(threshold=np.inf)
 
 def dotplot(seqA, seqB, w, s):
@@ -53,6 +56,15 @@ def dotplot(seqA, seqB, w, s):
 
 
 def dotplt2Ascii(dp, seqA, seqB, heading, filename):
+    '''
+    Creates ASCII art using a numpy matrix as input and writes the compared strings on the axes
+    :param dp: Numpy dotplot made of 1's and 0's
+    :param seqA: String
+    :param seqB: String
+    :param heading: Title to be posted at the top of file
+    :param filename: output file name (including the extension)
+    :return:
+    '''
     M = len(seqA)
     N = len(seqB)
 
@@ -68,9 +80,41 @@ def dotplt2Ascii(dp, seqA, seqB, heading, filename):
                     outputFile.write('*')
             outputFile.write('\n')
 
+def dotplot2Graphics(dp, hdA, hdB, heading):
+    '''
+    Uses a numpy dotplot used for comparing two strings and saves it as a figure (.png, .pdf, etc)
+    :param dp: Numpy dotplot
+    :param hdA: String A
+    :param hdB: String B
+    :param heading: Title
+    :param filename: output filepath
+    :return: Figure
+    '''
+
+    #Collect list of points
+    points = []
+
+    #Add points to a list if point in array == 1
+    for i in range(len(dp)):
+        for j in range(len(dp[i])):
+            if dp[i][j] == 1:
+                points.append((j, i))
+
+    fig, ax = plt.subplots()
+    dotplot = ax.scatter(*zip(*points), marker="+", s=2)
+
+    # Unzip points and plot them
+    plt.gca().invert_yaxis()
+    ax.xaxis.tick_top()
+    ax.xaxis.set_label_position('top')
+    plt.xlabel(hdB)
+    plt.ylabel(hdA, rotation=0)
+
+    plt.title(heading, y=1.15)
+    plt.show()
+
 
 seqA = "peter piper picked a peck of pickled peppers"
 seqB = "a peck of pickled peppers peter piper picked"
-peter_plot = dotplot(seqA, seqB, 5, 4)
-
-dotplt2Ascii(peter_plot, seqA, seqB, 'Peter Piper Bruce Plot', 'BSpeter.txt')
+dp = dotplot(seqA, seqB, 5, 4)
+dotplot2Graphics(dp, seqA, seqB, "Peter Piper")
