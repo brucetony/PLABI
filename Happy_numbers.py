@@ -15,13 +15,6 @@ def isHappy(n):
     else:
         return False
 
-#Make a list of happy between between 1 and 100
-happy_numbers = []
-for i in range(1, 101):
-    if isHappy(i) is True:
-        happy_numbers.append(i)
-print("List of happy nunbers found with a while loop:", happy_numbers)
-
 def isHappy_recursive(n):
     if n <= 0:
         raise ValueError("Input must be a positive value!")
@@ -40,11 +33,10 @@ def isHappy_recursive(n):
     else:
         return isHappy_recursive(num)
 
-#Make a list of happy between between 1 and 100
-happy_numbers = []
-for i in range(1, 101):
-    if isHappy_recursive(i) is True:
-        happy_numbers.append(i)
+# Make a list of happy between between 1 and 100
+happy_numbers = [i for i in range(1, 101) if isHappy_recursive(i)]
 print("List of happy nunbers found recursively:", happy_numbers)
 
-# TODO Make duplicate function using sets and lengths
+# Make a list of happy between between 1 and 100
+happy_numbers = [i for i in range(1, 101) if isHappy(i)]
+print("List of happy nunbers found with a while loop:", happy_numbers)
