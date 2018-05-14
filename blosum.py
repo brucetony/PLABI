@@ -39,7 +39,7 @@ def AA_prob(seq_list):
 
 
 def AA_pair_freq(seq_list):
-    '''Return a dictionary with absolute counts for every amino acid pair in a list of sequences'''
+    '''Return a dictionary with observed probabilities for each amino acid pair in a list of sequences'''
     pairings = list(combinations(seq_list, 2))
 
     # Get absolute counts for each pair
@@ -63,18 +63,30 @@ def AA_pair_freq(seq_list):
 def AA_scores(seq_list, output_table = False):
     '''Return a dictionary with the log odds score for each amino acid pair in a list of sequences'''
     probs = AA_prob(seq_list)
-    pairs = AA_pair_freq(seq_list)
+    pair_freqs = AA_pair_freq(seq_list)
 
-    # Create a dictionary which uses the probabilites of the two amino acids and multiples by 2
-    AA_expected = {key:(2*probs[list(key)[0]]*probs[list(key)[1]]) for (key, value) in pairs.items()}
+    # Create a dictionary which uses the probabilites of the two individual amino acids
+    AA_expected = dict()
+    for key, value in pair_freqs.items():
+        first_aa = list(key)[0]
+        second_aa = list(key)[1]
+        if first_aa == second_aa:
+            AA_expected[key] = probs[first_aa]**2
+        else:
+            AA_expected[key] = 2*probs[first_aa]*probs[second_aa]
 
     # Create dictionary of scores
-    scores = {key: int(round(2 * (log(pairs[key]/value, 2)))) for (key, value) in AA_expected.items()}
+    scores = dict()
+    for pair, expected_value in AA_expected.items():
+        pair_score = 2*log(pair_freqs[pair]/expected_value, 2)
+        if pair_score == 0:
+            print("WARNING 0 DETECTED")
+        scores[pair] = int(round(pair_score))
 
     # Print a nice table with pair values if desired
     if output_table:
-        table = PrettyTable([" "] + list(pairs.keys()))
-        table.add_row(["Pair Probs"] + [round(value, 3) for value in list(pairs.values())])
+        table = PrettyTable([" "] + list(pair_freqs.keys()))
+        table.add_row(["Pair Probs"] + [round(value, 3) for value in list(pair_freqs.values())])
         table.add_row(["Expected"] + [round(value, 3) for value in list(AA_expected.values())])
         table.add_row(["Score"] + [round(value, 3) for value in list(scores.values())])
         print(table)
