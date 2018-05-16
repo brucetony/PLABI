@@ -25,7 +25,16 @@ def read_score_matrix(input_matrix):
 
 
 def alignment_builder(columns, rows, trace_matrix, align_matrix, align='global'):
-
+    '''
+    Creates the aligned sequences using the trace_matrix directions
+    :param columns: Sequence 2 to be used as a reference for building
+    :param rows: Sequence 1 to be used as a reference for building
+    :param trace_matrix: Matrix containing direction ('V', 'H', 'D', and 'S') which dictates whether a residue or gap\
+    is added to aligned sequence
+    :param align_matrix: Pandas scoring matrix used to determine where to start the alignment
+    :param align: 'global' starts alignment at end of two sequences , 'local' starts at max score in align_matrix
+    :return: List with the two "aligned" sequences
+    '''
     # Instantiate alignment lists
     align_a = []
     align_b = []
@@ -83,13 +92,13 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
     scoring_matrix = read_score_matrix(score_matrix_file)
     w = gap_penalty
 
-    # Create data matrics
+    # Create data matrics align = scoring, trace = directions for building sequence after
     align_matrix = np.zeros((M, N), dtype=int)
     trace_matrix = np.empty((M, N), dtype=str)
 
     # Initialize matrices
     for i in range(M):
-        if align_type == 'global':  # If global then first row/column has linear decrease
+        if align_type == 'global':  # If global then first row/column has linear decay
             align_matrix[i][0] = w*i
         elif align_type == 'local':  # If local then first row/column set to 0
             align_matrix[i][0] = 0
@@ -108,8 +117,10 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
             aa_A = list(seqA)[i-1]  # Get amino acid at index i for seqA
             aa_B = list(seqB)[j-1]  # Get amino acid at index j for seqB
 
+            # TODO Create gap function
+
             # Define movement directions
-            diag = align_matrix[i-1][j-1] + scoring_matrix.at[(aa_A, aa_B)]
+            diag = align_matrix[i-1][j-1] + scoring_matrix.at[(aa_A, aa_B)]  # .at[] works because cols/rows are sets
             vertical = align_matrix[i-1][j] + w
             horizonal = align_matrix[i][j-1] + w
 
