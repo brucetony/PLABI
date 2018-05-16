@@ -7,7 +7,7 @@ def read_score_matrix(input_matrix):
     '''
     Converts a blosum matrix into a usable (pandas) format
     :param input_matrix: Txt file containing score matrix with values separated by "  "
-    :return: Pandas dataframe
+    :return: Pandas dataframe containing scoring matrix information
     '''
     with open(input_matrix, 'r') as file:
         string_lines = file.read().splitlines()
@@ -34,13 +34,13 @@ def alignment_builder(columns, rows, trace_matrix, align_matrix, align='global')
         i = len(rows)-1
         j = len(columns)-1
     elif align == 'local':
-        max_value_index = np.argmax(align_matrix.values)
-        max_coords = align_matrix.stack().index[max_value_index]
-        i = rows.index(max_coords[0])
-        j = columns.index(max_coords[1])
+        row_maxs = list(align_matrix.max(axis=1))
+        col_maxs = list(align_matrix.max(axis=0))
+        i = row_maxs.index(max(row_maxs))
+        j = col_maxs.index(max(col_maxs))
 
     while trace_matrix[i][j] != 'S':
-        if align_matrix.iloc[i, j] == 0 and align == 'local':  # Break if a socre of 0 is reached in local alignment
+        if align_matrix.iloc[i, j] == 0 and align == 'local':  # Break if a score of 0 is reached in local alignment
             break
         elif trace_matrix[i][j] == 'D':
             align_a.append(rows[i])
@@ -63,6 +63,21 @@ def alignment_builder(columns, rows, trace_matrix, align_matrix, align='global')
 
 
 def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='global', show_alignment=False):
+    '''
+    Uses either global (Needleman-Wunsch) or local (Smith-Waterman) alignment algorithms based on what the \
+    user choose for align_type. Print out a graphical representation of the alignment using a "|" for a \
+    matched set of residues and a ":" for a conservative (positive score) substitution. It will also print\
+    the alignment score as well as the sequence identity (perfectly matched residues divided by all aligned residues)\
+    and the sequence similarity (similar residues divided by all aligned residues). The graphical output includes \
+    the residue number at the end of the segment.
+    :param seqA: Sequenced to be aligned provided as a string or .fasta file
+    :param seqB: Sequenced to be aligned provided as a string or .fasta file
+    :param score_matrix_file: Pre-made matrix containing scores for matched residues
+    :param gap_penalty: Penalty given to score for mis-matched residues. Default set to -8
+    :param align_type: Either 'global' or 'local'
+    :param show_alignment: If True, will also print the score matrix for the two sequences
+    :return: A list with the two optimally aligned sequences including their gaps
+    '''
     M = len(seqA)+1  # Extra space for gap at beginning
     N = len(seqB)+1  # Extra space for gap at beginning
     scoring_matrix = read_score_matrix(score_matrix_file)
@@ -134,29 +149,58 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
         elif scoring_matrix.at[(opt_seq1[i], opt_seq2[i])] > 0:
             symbol_list[i] = ':'
 
-    # Print optimal alignments/symbols
+    # Calculate sequence similarity and sequence identity
+    similarity = round(100*(symbol_list.count('|')+symbol_list.count(':'))/len(opt_seq1), 2)
+    identity = round(100*symbol_list.count('|')/len(opt_seq1), 2)
+
+    # Divide the seqs and symbols into lengths of 50 for visibility
+    i = 0
+    opt1_chunk = []
+    opt2_chunk = []
+    symbol_chunk = []
+    while i < len(opt_seq1):
+        opt1_chunk.append(''.join(opt_seq1[i:i+50]))
+        opt2_chunk.append(''.join(opt_seq2[i:i+50]))
+        symbol_chunk.append(''.join(symbol_list[i:i+50]))
+        i += 50
+
+    # Print score -> optimal alignments/symbols -> Seq similarity/identity percentages
     print('Alignment score: {}\n'.format(align_matrix[M-1][N-1]))
-    print('{}\n{}\n{}'.format(opt_align[0], ''.join(symbol_list), opt_align[1]))
+    for i in range(len(opt1_chunk)):
+        # Add nucleotide counter to help after symbol output
+        print('{}\n{}  {}\n{}\n'.format(opt1_chunk[i], symbol_chunk[i], (i+1)*50, opt2_chunk[i]))
+    print('Sequence similarity: {}%\nSequence identity: {}%'.format(similarity, identity))
 
     return opt_align
 
 
 def fasta_parser(fasta_file):
-    assert os.path.splitext(fasta_file)[1] == '.fasta'
     with open(fasta_file, 'r') as file:
         sequence_lines = file.read().splitlines()[1:]
     return ''.join(sequence_lines)
 
 
 # For testing
-seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
-first_seq = fasta_parser("RNAS1_minke-whale.fasta")
-second_seq = fasta_parser("RNAS1_red-kangaroo.fasta")
-print(sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='local'))
-#sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='local')
+# seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
+# first_seq = fasta_parser("halodurans.fasta")
+# second_seq = fasta_parser("lentus.fasta")
+# #align_matrix = sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='local')
+# sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='global')
 
 # For running in cmd line
-# first_seq = fasta_parser(sys.argv[3])
-# second_seq = fasta_parser(sys.argv[4])
-#
-# sequence_alignment(first_seq, second_seq, sys.argv[2], int(sys.argv[1]))
+if os.path.splitext(sys.argv[3])[1] == '.fasta':
+    first_seq = fasta_parser(sys.argv[3])
+else:
+    first_seq = sys.argv[3]
+
+if os.path.splitext(sys.argv[4])[1] == '.fasta':
+    second_seq = fasta_parser(sys.argv[4])
+else:
+    second_seq = sys.argv[4]
+
+if sys.argv[5]:
+    user_align = sys.argv[5]
+else:
+    user_align = 'global'
+
+sequence_alignment(first_seq, second_seq, sys.argv[2], int(sys.argv[1]), align_type=user_align)
