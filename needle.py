@@ -24,17 +24,25 @@ def read_score_matrix(input_matrix):
     return df
 
 
-def alignment_builder(columns, rows, trace_matrix):
+def alignment_builder(columns, rows, trace_matrix, align_matrix, align='global'):
 
     # Instantiate alignment lists
     align_a = []
     align_b = []
 
-    i = len(rows)-1
-    j = len(columns)-1
+    if align == 'global':
+        i = len(rows)-1
+        j = len(columns)-1
+    elif align == 'local':
+        max_value_index = np.argmax(align_matrix.values)
+        max_coords = align_matrix.stack().index[max_value_index]
+        i = rows.index(max_coords[0])
+        j = columns.index(max_coords[1])
 
     while trace_matrix[i][j] != 'S':
-        if trace_matrix[i][j] == 'D':
+        if align_matrix.iloc[i, j] == 0 and align == 'local':  # Break if a socre of 0 is reached in local alignment
+            break
+        elif trace_matrix[i][j] == 'D':
             align_a.append(rows[i])
             align_b.append(columns[j])
             i -= 1
@@ -54,7 +62,7 @@ def alignment_builder(columns, rows, trace_matrix):
     return alignments
 
 
-def needleman_wunsch_global(seqA, seqB, score_matrix_file, gap_penalty, show_alignment=False):
+def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='global', show_alignment=False):
     M = len(seqA)+1  # Extra space for gap at beginning
     N = len(seqB)+1  # Extra space for gap at beginning
     scoring_matrix = read_score_matrix(score_matrix_file)
@@ -66,10 +74,16 @@ def needleman_wunsch_global(seqA, seqB, score_matrix_file, gap_penalty, show_ali
 
     # Initialize matrices
     for i in range(M):
-        align_matrix[i][0] = w*i
+        if align_type == 'global':  # If global then first row/column has linear decrease
+            align_matrix[i][0] = w*i
+        elif align_type == 'local':  # If local then first row/column set to 0
+            align_matrix[i][0] = 0
         trace_matrix[i][0] = 'V'
     for j in range(N):
-        align_matrix[0][j] = w*j
+        if align_type == 'global':
+            align_matrix[0][j] = w*j
+        elif align_type == 'local':
+            align_matrix[0][j] = 0
         trace_matrix[0][j] = 'H'
     trace_matrix[0][0] = 'S'  # S for STOP
 
@@ -84,7 +98,10 @@ def needleman_wunsch_global(seqA, seqB, score_matrix_file, gap_penalty, show_ali
             vertical = align_matrix[i-1][j] + w
             horizonal = align_matrix[i][j-1] + w
 
-            max_scorer = max(diag, vertical, horizonal)  # Get max score
+            if align_type == 'global':
+                max_scorer = max(diag, vertical, horizonal)  # Get max score for global alignment
+            elif align_type == 'local':
+                max_scorer = max(diag, vertical, horizonal, 0)
             align_matrix[i][j] = max_scorer
 
             # Fill trace_matrix with directions
@@ -104,7 +121,7 @@ def needleman_wunsch_global(seqA, seqB, score_matrix_file, gap_penalty, show_ali
         print(align_df)
 
     # Create alignment and symbols for matching - '|' = match, ':' = positive score
-    opt_align = alignment_builder(col_list, index_list, trace_matrix)
+    opt_align = alignment_builder(col_list, index_list, trace_matrix, align_df, align=align_type)
     opt_seq1 = list(opt_align[0])
     opt_seq2 = list(opt_align[1])
 
@@ -132,15 +149,14 @@ def fasta_parser(fasta_file):
 
 
 # For testing
-# seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
-# first_seq = fasta_parser("RNAS1_minke-whale.fasta")
-# second_seq = fasta_parser("RNAS1_red-kangaroo.fasta")
-# #needleman_wunsch_global(seqs[0], seqs[1], 'blosum62.txt', -8)
-# needleman_wunsch_global(first_seq, second_seq, 'blosum62.txt', -8)
-
+seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
+first_seq = fasta_parser("RNAS1_minke-whale.fasta")
+second_seq = fasta_parser("RNAS1_red-kangaroo.fasta")
+print(sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='local'))
+#sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='local')
 
 # For running in cmd line
-first_seq = fasta_parser(sys.argv[3])
-second_seq = fasta_parser(sys.argv[4])
-
-needleman_wunsch_global(first_seq, second_seq, sys.argv[2], int(sys.argv[1]))
+# first_seq = fasta_parser(sys.argv[3])
+# second_seq = fasta_parser(sys.argv[4])
+#
+# sequence_alignment(first_seq, second_seq, sys.argv[2], int(sys.argv[1]))
