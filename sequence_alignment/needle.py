@@ -39,6 +39,7 @@ def affine_gaps(i_pos, j_pos, trace_matrix, direction, d=-8, e=-2):
     gap_length = 1  # Length of gap sequence, start at 1 since gap must at least 1 long to exist
     i = i_pos
     j = j_pos
+    # TODO Fix so that it return the max value for all values 1 <= gap_length <= i,j
     if direction == 'V':
         while i >= 0 and trace_matrix[i-1][j] == 'V':
             gap_length += 1
@@ -159,6 +160,7 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
             # Define movement directions
             diag = align_matrix[i-1][j-1] + scoring_matrix.at[(aa_A, aa_B)]  # .at[] works because cols/rows are sets
             if affine:
+                # TODO these must return the max value for each score from {1 <= gap_length >= i}
                 vertical = align_matrix[i-1][j] + affine_gaps(i, j, trace_matrix, 'V', d=w, e=ext_penalty)
                 horizontal = align_matrix[i][j-1] + affine_gaps(i, j, trace_matrix, 'H', d=w, e=ext_penalty)
             else:
@@ -239,6 +241,7 @@ def fasta_parser(fasta_file):
 seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
 first_seq = fasta_parser("GLB7A_CHITH.fasta")
 second_seq = fasta_parser("GLBE_CHITH.fasta")
+sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=False, ext_penalty=-2)
 sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=True, ext_penalty=-2)
 #sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='global', affine=True)
 
