@@ -24,34 +24,8 @@ def read_score_matrix(input_matrix):
     return df
 
 
-def affine_gaps(i_pos, j_pos, trace_matrix, direction, d=-8, e=-2):
-    '''
-    Helper function to generate a penalty score for alignment scoring. Utilizes gap extension penalty added to a\
-    initial gap penalty
-    :param i_pos: Current row position in alignment matrix
-    :param j_pos: Current column position in alignment matrix
-    :param trace_matrix: Matrix containing directions for building alignments
-    :param direction: Current direction being checked (either 'V' or 'H')
-    :param d: initial gap penalty (w)
-    :param e: gap extension penalty
-    :return: penalty score
-    '''
-    gap_length = 1  # Length of gap sequence, start at 1 since gap must at least 1 long to exist
-    i = i_pos
-    j = j_pos
-    # TODO Fix so that it return the max value for all values 1 <= gap_length <= i,j
-    if direction == 'V':
-        while i >= 0 and trace_matrix[i-1][j] == 'V':
-            gap_length += 1
-            i -= 1
-    if direction == 'H':
-        while j >= 0 and trace_matrix[i][j-1] == 'H':
-            gap_length += 1
-            j -= 1
-    return d+e*(gap_length-1)  # Initial gap penalty multiplied by e times length - 1
-
-
-def alignment_builder(columns, rows, trace_matrix, align_matrix, align='global'):
+def alignment_builder(columns, rows, trace_matrix, align_matrix, align='global', \
+                      affine_adjust=False, x_matrix = 0, y_matrix = 0):
     '''
     Creates the aligned sequences using the trace_matrix directions
     :param columns: Sequence 2 to be used as a reference for building
@@ -75,22 +49,40 @@ def alignment_builder(columns, rows, trace_matrix, align_matrix, align='global')
         i = row_maxs.index(max(row_maxs))
         j = col_maxs.index(max(col_maxs))
 
-    while trace_matrix[i][j] != 'S':
-        if align_matrix.iloc[i, j] == 0 and align == 'local':  # Break if a score of 0 is reached in local alignment
-            break
-        elif trace_matrix[i][j] == 'D':
-            align_a.append(rows[i])
-            align_b.append(columns[j])
-            i -= 1
-            j -= 1
-        elif trace_matrix[i][j] == 'V':
-            align_a.append(rows[i])
-            align_b.append("-")
-            i -= 1
-        elif trace_matrix[i][j] == 'H':
-            align_a.append("-")
-            align_b.append(columns[j])
-            j -= 1
+    if affine_adjust:
+        while trace_matrix[i][j] != 'S':
+            print(x_matrix)
+            if align_matrix.iloc[i, j] == align_matrix.iloc[i-1, j-1]:
+                align_a.append(rows[i])
+                align_b.append(columns[j])
+                i -= 1
+                j -= 1
+            elif align_matrix.iloc[i, j] == x_matrix[i][j]:
+                align_a.append(rows[i])
+                align_b.append("-")
+                i -= 1
+            elif align_matrix.iloc[i, j] == y_matrix[i][j]:
+                align_a.append("-")
+                align_b.append(columns[j])
+                j -= 1
+        print(i)
+    else:
+        while trace_matrix[i][j] != 'S':
+            if align_matrix.iloc[i, j] == 0 and align == 'local':  # Break if a score of 0 is reached in local alignment
+                break
+            elif trace_matrix[i][j] == 'D':
+                align_a.append(rows[i])
+                align_b.append(columns[j])
+                i -= 1
+                j -= 1
+            elif trace_matrix[i][j] == 'V':
+                align_a.append(rows[i])
+                align_b.append("-")
+                i -= 1
+            elif trace_matrix[i][j] == 'H':
+                align_a.append("-")
+                align_b.append(columns[j])
+                j -= 1
 
     # Reverse sequence and join string
     alignments = [''.join(align_a[::-1]), ''.join(align_b[::-1])]
@@ -128,12 +120,18 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
     # Create data matrics align = scoring, trace = directions for building sequence after
     align_matrix = np.zeros((M, N), dtype=int)
     trace_matrix = np.empty((M, N), dtype=str)
+    if affine:
+        xval = np.zeros((M, N), dtype=int)
+        yval = np.zeros((M, N), dtype=int)
+        xval[0][:] = -1000000  # Set to -infinity
+        yval[:][0] = -1000000  # Set to -infinity
 
     # Initialize matrices
     for i in range(M):
         if align_type == 'global':  # If global then first row/column has decay
             if affine:
                 align_matrix[i][0] = w + ext_penalty*(i-1)
+                xval[i][0] = w + ext_penalty*(i)
             else:
                 align_matrix[i][0] = w*i
         elif align_type == 'local':  # If local then first row/column set to 0
@@ -143,6 +141,7 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
         if align_type == 'global':
             if affine:
                 align_matrix[0][j] = w + ext_penalty*(j-1)
+                yval[0][j] = w + ext_penalty*(j)
             else:
                 align_matrix[0][j] = w*j
         elif align_type == 'local':
@@ -160,16 +159,19 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
             # Define movement directions
             diag = align_matrix[i-1][j-1] + scoring_matrix.at[(aa_A, aa_B)]  # .at[] works because cols/rows are sets
             if affine:
-                # TODO these must return the max value for each score from {1 <= gap_length >= i}
-                vertical = align_matrix[i-1][j] + affine_gaps(i, j, trace_matrix, 'V', d=w, e=ext_penalty)
-                horizontal = align_matrix[i][j-1] + affine_gaps(i, j, trace_matrix, 'H', d=w, e=ext_penalty)
+                xval[i][j] = max(xval[i-1][j] + ext_penalty, align_matrix[i-1][j] + w + ext_penalty)
+                yval[i][j] = max(yval[i][j-1] + ext_penalty, align_matrix[i][j-1] + w + ext_penalty)
+                horizontal = xval[i][j]
+                vertical = yval[i][j]
+                # horizontal = xval[i-1][j-1] + scoring_matrix.at[(aa_A, aa_B)]
+                # vertical = yval[i-1][j-1] + scoring_matrix.at[(aa_A, aa_B)]
             else:
                 vertical = align_matrix[i-1][j] + w
                 horizontal = align_matrix[i][j-1] + w
 
             if align_type == 'global':
                 max_scorer = max(diag, vertical, horizontal)  # Get max score for global alignment
-            elif align_type == 'local':
+            else:
                 max_scorer = max(diag, vertical, horizontal, 0)
             align_matrix[i][j] = max_scorer
 
@@ -190,7 +192,11 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
         print(align_df)
 
     # Create alignment and symbols for matching - '|' = match, ':' = positive score
-    opt_align = alignment_builder(col_list, index_list, trace_matrix, align_df, align=align_type)
+    if affine:
+        opt_align = alignment_builder(col_list, index_list, trace_matrix, align_df, align=align_type, \
+                                      affine_adjust=True, x_matrix=xval, y_matrix=yval)
+    else:
+        opt_align = alignment_builder(col_list, index_list, trace_matrix, align_df, align=align_type)
     opt_seq1 = list(opt_align[0])
     opt_seq2 = list(opt_align[1])
 
