@@ -27,13 +27,15 @@ def read_score_matrix(input_matrix):
 def alignment_builder(columns, rows, trace_matrix, align_matrix, align='global', \
                       affine_adjust=False, x_matrix = 0, y_matrix = 0):
     '''
-    Creates the aligned sequences using the trace_matrix directions
+    Creates the aligned sequences using the trace_matrices' directions
     :param columns: Sequence 2 to be used as a reference for building
     :param rows: Sequence 1 to be used as a reference for building
-    :param trace_matrix: Matrix containing direction ('V', 'H', 'D', and 'S') which dictates whether a residue or gap\
-    is added to aligned sequence
+    :param trace_matrix: Matrix containing directions for building
     :param align_matrix: Pandas scoring matrix used to determine where to start the alignment
     :param align: 'global' starts alignment at end of two sequences , 'local' starts at max score in align_matrix
+    :param affine_adjust: Boolean; if True uses affine gap rules for traceback. Defaults to False
+    :param x_matrix: Matrix containing directions for building in the horizontal direction (only for affine gaps)
+    :param y_matrix: Matrix containing directions for building in the vertical direction (only for affine gaps)
     :return: List with the two "aligned" sequences
     '''
     # Instantiate alignment lists
@@ -50,22 +52,64 @@ def alignment_builder(columns, rows, trace_matrix, align_matrix, align='global',
         j = col_maxs.index(max(col_maxs))
 
     if affine_adjust:
-        while trace_matrix[i][j] != 'S':
-            print(x_matrix)
-            if align_matrix.iloc[i, j] == align_matrix.iloc[i-1, j-1]:
-                align_a.append(rows[i])
-                align_b.append(columns[j])
-                i -= 1
-                j -= 1
-            elif align_matrix.iloc[i, j] == x_matrix[i][j]:
-                align_a.append(rows[i])
-                align_b.append("-")
-                i -= 1
-            elif align_matrix.iloc[i, j] == y_matrix[i][j]:
-                align_a.append("-")
-                align_b.append(columns[j])
-                j -= 1
-        print(i)
+        current_trace_matrix = 'Main'
+        print(trace_matrix[i][j], x_matrix, y_matrix, sep='\n')
+        while i > 0 or j > 0:
+
+            if current_trace_matrix == 'Main':
+                if trace_matrix[i][j] == 'M':
+                    align_a.append(rows[i])
+                    align_b.append(columns[j])
+                    i -= 1
+                    j -= 1
+                    current_trace_matrix = 'Main'
+                elif trace_matrix[i][j] == 'X':
+                    align_a.append(rows[i])
+                    align_b.append(columns[j])
+                    i -= 1
+                    j -= 1
+                    current_trace_matrix = 'Horizontal Matrix'
+                elif trace_matrix[i][j] == 'Y':
+                    align_a.append(rows[i])
+                    align_b.append(columns[j])
+                    i -= 1
+                    j -= 1
+                    current_trace_matrix = 'Vertical Matrix'
+
+            elif current_trace_matrix == 'Horizontal Matrix':
+                if x_matrix[i][j] == 'M':
+                    align_a.append("-")
+                    align_b.append(columns[j])
+                    j -= 1
+                    current_trace_matrix = 'Main'
+                elif x_matrix[i][j] == 'X':
+                    align_a.append("-")
+                    align_b.append(columns[j])
+                    j -= 1
+                    current_trace_matrix = 'Horizontal Matrix'
+                # elif x_matrix[i][j] == 'Y':
+                #     align_a.append(rows[i])
+                #     align_b.append("-")
+                #     j -= 1
+                #     current_trace_matrix = 'Vertical Matrix'
+
+            elif current_trace_matrix == 'Vertical Matrix':
+                if y_matrix[i][j] == 'M':
+                    align_a.append(rows[i])
+                    align_b.append("-")
+                    i -= 1
+                    current_trace_matrix = 'Main'
+                # elif y_matrix[i][j] == 'X':
+                #     align_a.append("-")
+                #     align_b.append(columns[j])
+                #     i -= 1
+                #     current_trace_matrix = 'Horizontal Matrix'
+                elif y_matrix[i][j] == 'Y':
+                    align_a.append(rows[i])
+                    align_b.append("-")
+                    i -= 1
+                    current_trace_matrix = 'Vertical Matrix'
+
     else:
         while trace_matrix[i][j] != 'S':
             if align_matrix.iloc[i, j] == 0 and align == 'local':  # Break if a score of 0 is reached in local alignment
@@ -105,7 +149,7 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
     :param gap_penalty: Penalty given to score for mis-matched residues. Default set to -8
     :param align_type: Either 'global' or 'local'
     :param show_alignment: Boolean, if True, will also print the score matrix for the two sequences
-    :param e: Integer (usually negative), defines the gap extension penalty
+    :param ext_penalty: Integer (usually negative), defines the gap extension penalty
     :param affine: Boolean which decides whether to use smaller gap penalty for each gap used after the first
     :return: A list with the two optimally aligned sequences including their gaps
     '''
@@ -123,15 +167,14 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
     if affine:
         xval = np.zeros((M, N), dtype=int)
         yval = np.zeros((M, N), dtype=int)
-        xval[0][:] = -1000000  # Set to -infinity
-        yval[:][0] = -1000000  # Set to -infinity
 
     # Initialize matrices
     for i in range(M):
         if align_type == 'global':  # If global then first row/column has decay
             if affine:
                 align_matrix[i][0] = w + ext_penalty*(i-1)
-                xval[i][0] = w + ext_penalty*(i)
+                xval[i][0] = -1000000  # Set to neg infinity
+                yval[i][0] = w + ext_penalty * i
             else:
                 align_matrix[i][0] = w*i
         elif align_type == 'local':  # If local then first row/column set to 0
@@ -141,7 +184,8 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
         if align_type == 'global':
             if affine:
                 align_matrix[0][j] = w + ext_penalty*(j-1)
-                yval[0][j] = w + ext_penalty*(j)
+                xval[0][j] = w + ext_penalty * j
+                yval[0][j] = -1000000  # Set to neg infinity
             else:
                 align_matrix[0][j] = w*j
         elif align_type == 'local':
@@ -149,7 +193,7 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
         trace_matrix[0][j] = 'H'
     align_matrix[0][0] = 0
     trace_matrix[0][0] = 'S'  # S for STOP
-
+    x_trace, y_trace = np.empty((M, N), dtype=str), np.empty((M, N), dtype=str)
 
     for i in range(1, M):
         for j in range(1, N):
@@ -159,29 +203,56 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
             # Define movement directions
             diag = align_matrix[i-1][j-1] + scoring_matrix.at[(aa_A, aa_B)]  # .at[] works because cols/rows are sets
             if affine:
-                xval[i][j] = max(xval[i-1][j] + ext_penalty, align_matrix[i-1][j] + w + ext_penalty)
-                yval[i][j] = max(yval[i][j-1] + ext_penalty, align_matrix[i][j-1] + w + ext_penalty)
-                horizontal = xval[i][j]
-                vertical = yval[i][j]
-                # horizontal = xval[i-1][j-1] + scoring_matrix.at[(aa_A, aa_B)]
-                # vertical = yval[i-1][j-1] + scoring_matrix.at[(aa_A, aa_B)]
+                x_open = align_matrix[i][j-1] + w + ext_penalty  # Open gap penalty (plus jump penalty)
+                x_extend = xval[i][j-1] + ext_penalty
+                # y_jump = yval[i][j-1] + w + ext_penalty
+                xval[i][j] = max(x_open, x_extend)
+                if xval[i][j] == x_open:
+                    x_trace[i][j] = 'M'
+                elif xval[i][j] == x_extend:
+                    x_trace[i][j] = 'X'
+                # else:
+                #     x_trace[i][j] = 'Y'
+
+                y_open = align_matrix[i-1][j] + w + ext_penalty  # Open gap penalty (plus jump penalty)
+                y_extend = yval[i-1][j] + ext_penalty
+                # x_jump = xval[i-1][j] + w + ext_penalty
+                yval[i][j] = max(y_open, y_extend)
+                if yval[i][j] == y_open:
+                    y_trace[i][j] = 'M'
+                elif yval[i][j] == y_extend:
+                    y_trace[i][j] = 'Y'
+                # else:
+                #     y_trace[i][j] = 'X'
+
+                horizontal = xval[i-1][j-1]
+                vertical = yval[i-1][j-1]
+
             else:
                 vertical = align_matrix[i-1][j] + w
                 horizontal = align_matrix[i][j-1] + w
 
             if align_type == 'global':
-                max_scorer = max(diag, vertical, horizontal)  # Get max score for global alignment
+                max_scorer = max(diag, vertical, horizontal)  # Get max score if global alignment
             else:
-                max_scorer = max(diag, vertical, horizontal, 0)
+                max_scorer = max(diag, vertical, horizontal, 0)  # Get max score if local alignment
             align_matrix[i][j] = max_scorer
 
             # Fill trace_matrix with directions
-            if max_scorer == diag:
-                trace_matrix[i][j] = 'D'
-            elif max_scorer == vertical:
-                trace_matrix[i][j] = 'V'
+            if affine:
+                if max_scorer == diag:
+                    trace_matrix[i][j] = 'M'
+                elif max_scorer == vertical:
+                    trace_matrix[i][j] = 'Y'
+                else:
+                    trace_matrix[i][j] = 'X'
             else:
-                trace_matrix[i][j] = 'H'
+                if max_scorer == diag:
+                    trace_matrix[i][j] = 'D'
+                elif max_scorer == vertical:
+                    trace_matrix[i][j] = 'V'
+                else:
+                    trace_matrix[i][j] = 'H'
 
     # Organize into data frames for output
     col_list = [' '] + list(seqB)
@@ -194,7 +265,7 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
     # Create alignment and symbols for matching - '|' = match, ':' = positive score
     if affine:
         opt_align = alignment_builder(col_list, index_list, trace_matrix, align_df, align=align_type, \
-                                      affine_adjust=True, x_matrix=xval, y_matrix=yval)
+                                      affine_adjust=True, x_matrix=x_trace, y_matrix=y_trace)
     else:
         opt_align = alignment_builder(col_list, index_list, trace_matrix, align_df, align=align_type)
     opt_seq1 = list(opt_align[0])
@@ -233,7 +304,6 @@ def sequence_alignment(seqA, seqB, score_matrix_file, gap_penalty, align_type='g
         seq_length += len(symbol_chunk[i])  # Add length of aligned seq to counter
         print('{}\n{}  {}\n{}\n'.format(opt1_chunk[i], symbol_chunk[i], seq_length, opt2_chunk[i]))
     print('Sequence similarity: {}%\nSequence identity: {}%\n'.format(similarity, identity))
-
     return opt_align
 
 
@@ -244,12 +314,13 @@ def fasta_parser(fasta_file):
 
 
 # For testing
-seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
-first_seq = fasta_parser("GLB7A_CHITH.fasta")
-second_seq = fasta_parser("GLBE_CHITH.fasta")
-sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=False, ext_penalty=-2)
-sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=True, ext_penalty=-2)
-#sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='global', affine=True)
+# seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
+# first_seq = fasta_parser("GLB7A_CHITH.fasta")
+# second_seq = fasta_parser("GLBE_CHITH.fasta")
+# sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=False, ext_penalty=-2)
+# sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=True, ext_penalty=-2)
+# sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='global', affine=False)
+# sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='local', affine=False)
 
 # For running in cmd line
 # Input Order:
@@ -262,33 +333,33 @@ sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global
 #   (Opt) Gap extension penalty (only if global chosen), default = -2
 
 # Decide if user input a fasta file or string
-# if os.path.splitext(sys.argv[3])[1] == '.fasta':
-#     first_seq = fasta_parser(sys.argv[3])
-# else:
-#     first_seq = sys.argv[3]
-#
-# if os.path.splitext(sys.argv[4])[1] == '.fasta':
-#     second_seq = fasta_parser(sys.argv[4])
-# else:
-#     second_seq = sys.argv[4]
-#
-# # Determine if user defined a specific alignment type else global
-# if sys.argv[5]:
-#     user_align = sys.argv[5]
-# else:
-#     user_align = 'global'
-#
-# # Choose affine gaps (Boolean), default is False
-# if sys.argv[6]:
-#     affine_gap = sys.argv[6]
-# else:
-#     affine_gap = False
-#
-# # Input gap extension penalty if provided
-# if sys.argv[7]:
-#     user_ext_penalty = sys.argv[7]
-# else:
-#     user_ext_penalty = -2
-#
-# sequence_alignment(first_seq, second_seq, sys.argv[2], int(sys.argv[1]), align_type=user_align, \
-#                    affine=affine_gap, ext_penalty=int(user_ext_penalty))
+if os.path.splitext(sys.argv[3])[1] == '.fasta':
+    first_seq = fasta_parser(sys.argv[3])
+else:
+    first_seq = sys.argv[3]
+
+if os.path.splitext(sys.argv[4])[1] == '.fasta':
+    second_seq = fasta_parser(sys.argv[4])
+else:
+    second_seq = sys.argv[4]
+
+# Determine if user defined a specific alignment type else global
+if sys.argv[5]:
+    user_align = sys.argv[5]
+else:
+    user_align = 'global'
+
+# Choose affine gaps (Boolean), default is False
+if sys.argv[6]:
+    affine_gap = sys.argv[6]
+else:
+    affine_gap = False
+
+# Input gap extension penalty if provided
+if sys.argv[7]:
+    user_ext_penalty = sys.argv[7]
+else:
+    user_ext_penalty = -2
+
+sequence_alignment(first_seq, second_seq, sys.argv[2], int(sys.argv[1]), align_type=user_align, \
+                   affine=affine_gap, ext_penalty=int(user_ext_penalty))
