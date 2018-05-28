@@ -12,15 +12,25 @@ def read_score_matrix(input_matrix):
     with open(input_matrix, 'r') as file:
         string_lines = file.read().splitlines()
 
-    reduced_lines = []
-    for string in string_lines:
-        string_list = string.split(' ')  # Remove double spaces
-        reduced_lines.append(string_list)
+    if input_matrix == 'blosum50.txt':
+        string_lines = [string.split('\t') for string in string_lines]
+        reduced_lines = []
+        for string_list in string_lines:
+            stripped = [thing.strip() for thing in string_list]
+            reduced_lines.append(stripped)
+
+    if input_matrix == 'blosum62.txt':
+        reduced_lines = []
+        for string in string_lines:
+            string_list = string.split(' ')
+            reduced_lines.append(string_list)
+
     reduced_lines = [list(filter(None, strings)) for strings in reduced_lines]  # Remove empty lists
     aa_list = reduced_lines[0]
     sliced_scores = [score[1:] for score in reduced_lines[1:] if score]
     df = pd.DataFrame(sliced_scores, columns=aa_list, index=aa_list)
     df[aa_list] = df[aa_list].astype(int)
+
     return df
 
 
@@ -301,9 +311,9 @@ def fasta_parser(fasta_file):
 
 # For testing
 # seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
-# first_seq = fasta_parser("GLB7A_CHITH.fasta")
-# second_seq = fasta_parser("GLBE_CHITH.fasta")
-# sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=False, ext_penalty=-2)
+# first_seq = fasta_parser("RNAS1_minke-whale.fasta")
+# second_seq = fasta_parser("RNAS1_red-kangaroo.fasta")
+# sequence_alignment(first_seq, second_seq, 'blosum50.txt', -8, align_type='global', affine=False, ext_penalty=-2)
 # sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=True, ext_penalty=-2)
 # sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='global', affine=False)
 # sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='local', affine=False)
@@ -319,32 +329,38 @@ def fasta_parser(fasta_file):
 #   (Opt) Gap extension penalty (only if global chosen), default = -2
 
 # Decide if user input a fasta file or string
-if os.path.splitext(sys.argv[3])[1] == '.fasta':
-    first_seq = fasta_parser(sys.argv[3])
-else:
-    first_seq = sys.argv[3]
+try:
+    if os.path.splitext(sys.argv[3])[1] == '.fasta':
+        first_seq = fasta_parser(sys.argv[3])
+    else:
+        first_seq = str(sys.argv[3])
+except ValueError:
+    print("Not a valid sequence, please provide a '.fasta' file or string")
 
-if os.path.splitext(sys.argv[4])[1] == '.fasta':
-    second_seq = fasta_parser(sys.argv[4])
-else:
-    second_seq = sys.argv[4]
+try:
+    if os.path.splitext(sys.argv[4])[1] == '.fasta':
+        second_seq = fasta_parser(sys.argv[4])
+    else:
+        second_seq = str(sys.argv[4])
+except ValueError:
+    print("Not a valid sequence, please provide a '.fasta' file or string")
 
 # Determine if user defined a specific alignment type else global
-if sys.argv[5]:
+try:
     user_align = sys.argv[5]
-else:
+except:
     user_align = 'global'
 
 # Choose affine gaps (Boolean), default is False
-if sys.argv[6]:
+try:
     affine_gap = sys.argv[6]
-else:
+except:
     affine_gap = False
 
 # Input gap extension penalty if provided
-if sys.argv[7]:
+try:
     user_ext_penalty = sys.argv[7]
-else:
+except:
     user_ext_penalty = -2
 
 sequence_alignment(first_seq, second_seq, sys.argv[2], int(sys.argv[1]), align_type=user_align, \
