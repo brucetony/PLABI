@@ -124,23 +124,19 @@ def score_matrix(seq_list, output_table=False):
 
 
 #Test seqs
-seqs = ["TSVKTYAKFVTH", "TSVKTYAKFSTH", "TSVKTYAKFVTH", "LSVKKYPKYVVQ", "SSVKKYPKYSVL"]
-score_matrix(seqs, output_table=True)
+# seqs = ["TSVKTYAKFVTH", "TSVKTYAKFSTH", "TSVKTYAKFVTH", "LSVKKYPKYVVQ", "SSVKKYPKYSVL"]
+# score_matrix(seqs, output_table=True)
 
-# with open(sys.argv[1], 'r') as file:
-#     seqs = file.read().splitlines()
-#
-# if sys.argv[3]:
-#     table = sys.argv[3]
-# else:
-#     table = False
-# alignment_scores = score_matrix(seqs, output_table=table)
-#
-# try:
-#     if os.path.splitext(sys.argv[2])[1] == '.csv':
-#         alignment_scores.to_csv(sys.argv[2])
-#     else:
-#         with open(sys.argv[2], 'w') as output_file:
-#             alignment_scores.to_string(output_file)
-# except ValueError:
-#     print("No valid output path provided. Matrix will not be saved...")
+with open(sys.argv[1], 'r') as file:
+    seqs = file.read().splitlines()
+
+alignment_scores = score_matrix(seqs)
+
+try:
+    if os.path.splitext(sys.argv[2])[1] == '.csv':
+        alignment_scores.to_csv(sys.argv[2])
+    else:
+        with open(sys.argv[2], 'w') as output_file:
+            alignment_scores.to_string(output_file)
+except ValueError:
+    print("No valid output path provided. Matrix will not be saved...")
