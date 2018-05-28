@@ -300,11 +300,11 @@ def fasta_parser(fasta_file):
 
 
 # For testing
-seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
-first_seq = fasta_parser("GLB7A_CHITH.fasta")
-second_seq = fasta_parser("GLBE_CHITH.fasta")
-sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=False, ext_penalty=-2)
-sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=True, ext_penalty=-2)
+# seqs = ["THRQATWQPPLERMANGRQVE", "RAYMQNDLVKVRYYACHT"]
+# first_seq = fasta_parser("GLB7A_CHITH.fasta")
+# second_seq = fasta_parser("GLBE_CHITH.fasta")
+# sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=False, ext_penalty=-2)
+# sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global', affine=True, ext_penalty=-2)
 # sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='global', affine=False)
 # sequence_alignment(seqs[0], seqs[1], 'blosum62.txt', -8, align_type='local', affine=False)
 
@@ -318,34 +318,34 @@ sequence_alignment(first_seq, second_seq, 'blosum62.txt', -8, align_type='global
 #   (Opt) Affine gap -- True or False (default to False
 #   (Opt) Gap extension penalty (only if global chosen), default = -2
 
-# # Decide if user input a fasta file or string
-# if os.path.splitext(sys.argv[3])[1] == '.fasta':
-#     first_seq = fasta_parser(sys.argv[3])
-# else:
-#     first_seq = sys.argv[3]
-#
-# if os.path.splitext(sys.argv[4])[1] == '.fasta':
-#     second_seq = fasta_parser(sys.argv[4])
-# else:
-#     second_seq = sys.argv[4]
-#
-# # Determine if user defined a specific alignment type else global
-# if sys.argv[5]:
-#     user_align = sys.argv[5]
-# else:
-#     user_align = 'global'
-#
-# # Choose affine gaps (Boolean), default is False
-# if sys.argv[6]:
-#     affine_gap = sys.argv[6]
-# else:
-#     affine_gap = False
-#
-# # Input gap extension penalty if provided
-# if sys.argv[7]:
-#     user_ext_penalty = sys.argv[7]
-# else:
-#     user_ext_penalty = -2
-#
-# sequence_alignment(first_seq, second_seq, sys.argv[2], int(sys.argv[1]), align_type=user_align, \
-#                    affine=affine_gap, ext_penalty=int(user_ext_penalty))
+# Decide if user input a fasta file or string
+if os.path.splitext(sys.argv[3])[1] == '.fasta':
+    first_seq = fasta_parser(sys.argv[3])
+else:
+    first_seq = sys.argv[3]
+
+if os.path.splitext(sys.argv[4])[1] == '.fasta':
+    second_seq = fasta_parser(sys.argv[4])
+else:
+    second_seq = sys.argv[4]
+
+# Determine if user defined a specific alignment type else global
+if sys.argv[5]:
+    user_align = sys.argv[5]
+else:
+    user_align = 'global'
+
+# Choose affine gaps (Boolean), default is False
+if sys.argv[6]:
+    affine_gap = sys.argv[6]
+else:
+    affine_gap = False
+
+# Input gap extension penalty if provided
+if sys.argv[7]:
+    user_ext_penalty = sys.argv[7]
+else:
+    user_ext_penalty = -2
+
+sequence_alignment(first_seq, second_seq, sys.argv[2], int(sys.argv[1]), align_type=user_align, \
+                   affine=affine_gap, ext_penalty=int(user_ext_penalty))

@@ -85,19 +85,26 @@ def AA_scores(seq_list, output_table = False):
 
     # Print a nice table with pair values if desired
     if output_table:
-        table = PrettyTable([" "] + list(pair_freqs.keys()))
-        table.add_row(["Pair Probs"] + [round(value, 3) for value in list(pair_freqs.values())])
-        table.add_row(["Expected"] + [round(value, 3) for value in list(AA_expected.values())])
-        table.add_row(["Score"] + [round(value, 3) for value in list(scores.values())])
-        print(table)
+        i = 0
+        chunk_size = 10
+        pair_probability_list = [round(value, 3) for value in list(pair_freqs.values())]
+        expected_prob_list = [round(value, 3) for value in list(AA_expected.values())]
+        score_list = [round(value, 3) for value in list(scores.values())]
+        while i < len(pair_freqs.keys()):
+            table = PrettyTable([" "] + list(pair_freqs.keys())[i:i+chunk_size])
+            table.add_row(["Pair Probs"] + pair_probability_list[i:i+chunk_size])
+            table.add_row(["Expected"] + expected_prob_list[i:i+chunk_size])
+            table.add_row(["Score"] + score_list[i:i+chunk_size])
+            i += chunk_size
+            print(table)
 
     return scores
 
-def score_matrix(seq_list):
+def score_matrix(seq_list, output_table=False):
 
     # Generate a score matrix
     aa_list = list(AA_list(seq_list))
-    scores = AA_scores(seq_list)
+    scores = AA_scores(seq_list, output_table)
 
     # Create empty matrix with proper dimensions
     score_array = np.zeros((len(aa_list), len(aa_list)), dtype='int')  # Empty matrix at first
@@ -117,18 +124,23 @@ def score_matrix(seq_list):
 
 
 #Test seqs
-#seqs = ["TSVKTYAKFVTH", "TSVKTYAKFSTH", "TSVKTYAKFVTH", "LSVKKYPKYVVQ", "SSVKKYPKYSVL"]
+seqs = ["TSVKTYAKFVTH", "TSVKTYAKFSTH", "TSVKTYAKFVTH", "LSVKKYPKYVVQ", "SSVKKYPKYSVL"]
+score_matrix(seqs, output_table=True)
 
-with open(sys.argv[1], 'r') as file:
-    seqs = file.read().splitlines()
-
-alignment_scores = score_matrix(seqs)
-
-try:
-    if os.path.splitext(sys.argv[2])[1] == '.csv':
-        alignment_scores.to_csv(sys.argv[2])
-    else:
-        with open(sys.argv[2], 'w') as output_file:
-            alignment_scores.to_string(output_file)
-except ValueError:
-    print("No valid output path provided. Matrix will not be saved...")
+# with open(sys.argv[1], 'r') as file:
+#     seqs = file.read().splitlines()
+#
+# if sys.argv[3]:
+#     table = sys.argv[3]
+# else:
+#     table = False
+# alignment_scores = score_matrix(seqs, output_table=table)
+#
+# try:
+#     if os.path.splitext(sys.argv[2])[1] == '.csv':
+#         alignment_scores.to_csv(sys.argv[2])
+#     else:
+#         with open(sys.argv[2], 'w') as output_file:
+#             alignment_scores.to_string(output_file)
+# except ValueError:
+#     print("No valid output path provided. Matrix will not be saved...")
