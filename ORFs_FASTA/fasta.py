@@ -40,3 +40,5 @@ def write_fasta(outfile, header, sequence):
         outfile.write(sequence[i:i+69]+'\n')  # Sequence lines cannot be > 70 chars
         i += 69
 
+
+# TODO make it so functions do NOT open file
