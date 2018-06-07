@@ -1,10 +1,11 @@
+import re
 from collections import defaultdict
 
 
 def get_sequence_positions(fasta_file):
     with open(fasta_file, 'r') as f:
         line_list = f.read().split(':')[1:]  # Extract lines after ':' where numbers directly are
-        coding_sequences = [seq.split(' ')[0] for seq in line_list]  # Get numbers from line_list
+        coding_sequences = [re.split(r'[, ]', seq)[0] for seq in line_list]  # Get numbers from line_list
         split_seq_numbers = []
         for seq_set in coding_sequences:
             numbers = seq_set.split('-')  # Remove '-' between numbers and put into tuple

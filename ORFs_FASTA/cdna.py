@@ -22,9 +22,11 @@ def complement_strand(seq):
     return ''.join(comp_strand[::-1])  # Reverse at end (cDNA often provided in 5' -> 3')
 
 
-seq_of_interest = single_fasta_sequence(sys.argv[1])[1]
+with open(sys.argv[1], 'r') as in_file:
+    hd, seq_of_interest = single_fasta_sequence(in_file)
+
 
 with open(sys.argv[2], 'w') as file:
     comp = complement_strand(seq_of_interest)
-    hd = "cDNA"
+    hd = "cDNA {}".format(hd)
     write_fasta(file, hd, comp)

@@ -41,7 +41,10 @@ def orf_writer(seq, outfile):
                 write_fasta(outfile, header, seq[orf[0]-1:orf[1]-1])
 
 
-seq_of_interest = single_fasta_sequence(sys.argv[1])[1]
+with open(sys.argv[1], 'r') as in_file:
+    hd, seq_of_interest = single_fasta_sequence(in_file)
 
 with open(sys.argv[2], 'w') as file:
     orf_writer(seq_of_interest, file)
+
+# TODO the second number is one off each time

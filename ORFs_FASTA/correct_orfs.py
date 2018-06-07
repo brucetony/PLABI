@@ -1,3 +1,6 @@
+from orf_tools import get_sequence_positions
+
+
 
 
 # Print number of ORFs from orf file
@@ -6,3 +9,4 @@ with open('ecoli-orfs.ffn', 'r') as orf_file:
 
 with open('ecoli-genes.ffn', 'r') as gene_file:
     print('Number of genes:', len(gene_file.read().split('>')[1:]))
+
