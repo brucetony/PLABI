@@ -1,6 +1,5 @@
 from itertools import combinations
 from math import log
-from prettytable import PrettyTable
 import pandas as pd
 import numpy as np
 import sys
@@ -90,13 +89,15 @@ def AA_scores(seq_list, output_table = False):
         pair_probability_list = [round(value, 3) for value in list(pair_freqs.values())]
         expected_prob_list = [round(value, 3) for value in list(AA_expected.values())]
         score_list = [round(value, 3) for value in list(scores.values())]
-        while i < len(pair_freqs.keys()):
-            table = PrettyTable([" "] + list(pair_freqs.keys())[i:i+chunk_size])
-            table.add_row(["Pair Probs"] + pair_probability_list[i:i+chunk_size])
-            table.add_row(["Expected"] + expected_prob_list[i:i+chunk_size])
-            table.add_row(["Score"] + score_list[i:i+chunk_size])
-            i += chunk_size
-            print(table)
+
+        # Below code is used wih PrettyTable which is no longer supported by Python 3
+        # while i < len(pair_freqs.keys()):
+        #     table = PrettyTable([" "] + list(pair_freqs.keys())[i:i+chunk_size])
+        #     table.add_row(["Pair Probs"] + pair_probability_list[i:i+chunk_size])
+        #     table.add_row(["Expected"] + expected_prob_list[i:i+chunk_size])
+        #     table.add_row(["Score"] + score_list[i:i+chunk_size])
+        #     i += chunk_size
+        #     print(table)
 
     return scores
 
