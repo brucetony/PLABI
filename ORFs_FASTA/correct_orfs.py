@@ -4,9 +4,14 @@ from orf_tools import get_sequence_positions
 
 
 # Print number of ORFs from orf file
-with open('ecoli-orfs.ffn', 'r') as orf_file:
-    print('Number of open reading frames:', len(orf_file.read().split('>')[1:]))
+orfs = 'ecoli_orf.ffn'
 
-with open('ecoli-genes.ffn', 'r') as gene_file:
-    print('Number of genes:', len(gene_file.read().split('>')[1:]))
+genes = 'ecoli-genes.ffn'
 
+def predicted_orfs(gene_file, orf_file):
+    gene_dict, orf_dict = get_sequence_positions(gene_file), get_sequence_positions(orf_file)  # Make seq position dicts
+    gene_starts = [position for sublist in gene_dict.values() for position in sublist]  # Convert list of lists to list
+    orf_starts = [position for sublist in orf_dict.values() for position in sublist]
+    print(orf_starts)
+
+predicted_orfs(genes, orfs)

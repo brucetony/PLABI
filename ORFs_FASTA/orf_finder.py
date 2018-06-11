@@ -15,7 +15,7 @@ def orf_finder(seq):
                 start_codon = k+1  # Extra 1 because counting starts at 1 in the sequence
                 k += 3
             elif seq[k:k+3] in stop_codon_list and start_codon is not None:
-                stop_codon = k+4
+                stop_codon = k+3
                 longest_orfs.append((start_codon, stop_codon))
                 start_codon, stop_codon = None, None
                 k += 3
@@ -25,19 +25,20 @@ def orf_finder(seq):
     return longest_orfs
 
 
-def orf_writer(seq, outfile):
+def orf_writer(seq, outfile, genome_identifier):
     cDNAflag = False
     comp_strand = complement_strand(seq)  # Create complementary strand
     orf_lists = [orf_finder(seq), orf_finder(comp_strand)]
+    genome_identifier = genome_identifier.split(' ')[0]  # Used to removed long name after last '|' in name
     for i in range(len(orf_lists)):
         if i == 1:
             cDNAflag = True
         for orf in orf_lists[i]:
             if cDNAflag:
-                header = ':c{}-{}'.format(len(seq)-orf[0]+1, len(seq)-orf[1]+1)
+                header = '{}:c{}-{}'.format(genome_identifier, len(seq)-orf[0]+1, len(seq)-orf[1]+1)
                 write_fasta(outfile, header, comp_strand[orf[0]-1:orf[1]-1])
             else:
-                header = '{}-{}'.format(orf[0], orf[1])
+                header = '{}:{}-{}'.format(genome_identifier, orf[0], orf[1])
                 write_fasta(outfile, header, seq[orf[0]-1:orf[1]-1])
 
 
@@ -45,6 +46,4 @@ with open(sys.argv[1], 'r') as in_file:
     hd, seq_of_interest = single_fasta_sequence(in_file)
 
 with open(sys.argv[2], 'w') as file:
-    orf_writer(seq_of_interest, file)
-
-# TODO the second number is one off each time
+    orf_writer(seq_of_interest, file, hd)
