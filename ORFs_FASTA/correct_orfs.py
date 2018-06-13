@@ -1,11 +1,12 @@
+import sys
 from orf_tools import get_sequence_positions
 
-# Print number of ORFs from orf file
-orfs = 'ecoli-orfs.ffn'
-genes = 'ecoli-genes.ffn'
+# For testing
+# orfs = 'ecoli-orfs.ffn'
+# genes = 'ecoli-genes.ffn'
 
 
-def predicted_orfs(gene_file, orf_file, min_orf_length=None):
+def predicted_orfs(orf_file, gene_file, min_orf_length=None):
     print('----------------------------------------------')  # Separator
     # Get number of genes/orfs in each file
     with open(gene_file, 'r') as gene_f:
@@ -49,10 +50,17 @@ def predicted_orfs(gene_file, orf_file, min_orf_length=None):
     print('Number of genes with no matching ORF stop codon:', num_genes-len(matching_stop_pos))
 
 
-predicted_orfs(genes, orfs, min_orf_length=50)
-predicted_orfs(genes, orfs, min_orf_length=100)
-predicted_orfs(genes, orfs, min_orf_length=150)
-predicted_orfs(genes, orfs, min_orf_length=200)
-predicted_orfs(genes, orfs, min_orf_length=250)
-predicted_orfs(genes, orfs, min_orf_length=300)
-predicted_orfs(genes, orfs, min_orf_length=350)
+# # For testing
+# predicted_orfs(genes, orfs, min_orf_length=50)
+# predicted_orfs(genes, orfs, min_orf_length=100)
+# predicted_orfs(genes, orfs, min_orf_length=150)
+# predicted_orfs(genes, orfs, min_orf_length=200)
+# predicted_orfs(genes, orfs, min_orf_length=250)
+# predicted_orfs(genes, orfs, min_orf_length=300)
+# predicted_orfs(genes, orfs, min_orf_length=350)
+
+if __name__ == "__main__":
+    if len(sys.argv) > 3:
+        predicted_orfs(sys.argv[1], sys.argv[2], min_orf_length=int(sys.argv[3]))
+    else:
+        predicted_orfs(sys.argv[1], sys.argv[2])
