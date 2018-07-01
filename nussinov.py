@@ -37,7 +37,7 @@ def subseq_score(i, j, sequence, h_loop=1):
         # For cases 3 and 4 we find the max score of paired values (check to see if they are paired)
         paired = [subseq_score(i, k, sequence, h_loop=h_loop)
                   + subseq_score(k+1, j, sequence, h_loop=h_loop) for k in range(i, j)
-                  if delta(k, j, sequence) == 1]
+                  if delta(k+1, j, sequence) == 1 and delta(i, k, sequence) == 1]
 
         # In case the paired comprehension returns nothing
         if not paired:
@@ -61,21 +61,21 @@ def matched_base_pairs(i, j, sequence, completed_pair_matrix, h_loop=1):
     if j-i+1 >= h_loop+2:
         if completed_pair_matrix[i][j] == completed_pair_matrix[i+1][j-1] + delta(i, j, sequence):
             # Case 2 where if new match made then append to list
-            if delta(i, j, sequence) == 1:
+            if delta(i, j, sequence) == 1:  # If 0 then no match so we can skip, only care about 1
                 matched_positions.append((i, j))
-            if matched_base_pairs(i+1, j-1, sequence, completed_pair_matrix, h_loop=h_loop):
-                matched_positions.extend(matched_base_pairs(i+1, j-1, sequence, completed_pair_matrix,
-                                                            h_loop=h_loop))
+            matched = matched_base_pairs(i+1, j-1, sequence, completed_pair_matrix, h_loop=h_loop)
+            if matched:  # No empty lists
+                matched_positions.extend(matched)
         else:
             # Case 3, find k in range (i,j) and get list of paired of comp bases then join them
             for k in range(i, j-1):
                 if completed_pair_matrix[i][j] == completed_pair_matrix[i][k] + completed_pair_matrix[k+1][j]:
                     first_half = matched_base_pairs(i, k, sequence, completed_pair_matrix, h_loop=h_loop)
                     second_half = matched_base_pairs(k+1, j, sequence, completed_pair_matrix, h_loop=h_loop)
-                    if first_half and second_half:
+                    if first_half and second_half:  # Check if list is empty
                         matched_positions.extend((first_half, second_half))
                 # Once we have found that k value we break from the loop
-                break
+                # break
 
     return matched_positions
 
@@ -84,8 +84,9 @@ def backtrack(sequence, completed_pair_matrix, h_loop=1):
     matched_positions = []
     for i in range(len(sequence)):
         for j in range(i, len(sequence)):
-            if matched_base_pairs(i, j, sequence, completed_pair_matrix, h_loop=h_loop):
-                matched_positions.append(matched_base_pairs(i, j, sequence, completed_pair_matrix, h_loop=h_loop))
+            matched = matched_base_pairs(i, j, sequence, completed_pair_matrix, h_loop=h_loop)
+            if matched:
+                matched_positions.append(matched)
     return matched_positions
 
 
@@ -130,17 +131,17 @@ def nussinov(sequence, h_loop=1):
     print('Backtracking completed\nNumber of possible solutions:', optimal_solutions(pair_list),
           '\nDisplaying first solution\n')
 
-    # Display first optimal matching
-    optimal_base_pairing = max(pair_list, key=len)
+    # Sort sublists by length to get longest (optimal) in first position
+    pair_list.sort(key=len, reverse=True)
+    optimal_base_pairing = pair_list[0]
     print(sequence)
     print(display_pairing(sequence, optimal_base_pairing))
     print('\nNumber of base pairs found:', len(optimal_base_pairing))
     return pair_matrix
 
 
-# seq = 'AUCGGAGCAUUUUUUGCUCCGACGCAGCCUCAUGCUUUUUU'
+seq = 'AUCGGAGCAUUUUUUGCUCCGACGCAGCCUCAUGCUUUUUU'
 
 # For testing
-seq = 'AUCGGAGCAUUUUUUGCUCCGA'
-dp = nussinov(seq, h_loop=1)
-bt = backtrack(seq, dp)
+# seq = 'AUCGGAGCAUUUUUUGCUCCGA'
+dp = nussinov(seq)
