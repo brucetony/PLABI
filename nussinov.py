@@ -46,15 +46,6 @@ def subseq_score(i, j, sequence, h_loop=1):
     return max(unpaired, max(paired))
 
 
-def flatten(container):
-    for config in container:
-        if isinstance(config, list):
-            for j in flatten(config):
-                yield j
-        else:
-            yield config
-
-
 def backtrack(i, j, sequence, completed_pair_matrix, matched_positions, h_loop=1):
     """
     Determiens proper base pairing based on a completed dynamic scoring matrix created by subseq_score
@@ -67,7 +58,7 @@ def backtrack(i, j, sequence, completed_pair_matrix, matched_positions, h_loop=1
     :return: List of indices of optimal base pairings within the given sequence
     """
 
-    # Requirement: the sequence length must be greater than 2 to continue
+    # Requirement: the sequence length must be greater than h_loop + 1 to continue
     if j-i+1 >= h_loop+2:
         if completed_pair_matrix[i][j] == completed_pair_matrix[i+1][j-1] + delta(i, j, sequence):
             # If new match made then append to list
@@ -116,13 +107,11 @@ def nussinov(sequence, h_loop=1):
     pair_matrix = np.zeros((N, N), dtype='int')
     
     # Generate scores for dynamic matrix using subseq score function
-    print('Beginning scoring of sequence...')
     for i in range(N):
         for j in range(i, N):
             pair_matrix[i][j] = subseq_score(i, j, sequence, h_loop=h_loop)
             pair_matrix[j][i] = pair_matrix[i][j]  # Make matrix reflective
 
-    print('Scoring matrix completed.\n\nBeginning backtracking...\n')
     # Find optimal pairing solution
     optimal_base_pairing = backtrack(0, N-1, sequence, pair_matrix, h_loop=h_loop, matched_positions=[])
 
@@ -130,7 +119,7 @@ def nussinov(sequence, h_loop=1):
     #       '\nDisplaying first solution\n')
 
     # optimal_base_pairing.sort(key=len, reverse=True)
-    print('Optimal matched base pairing positions in RNA sequence:\n', optimal_base_pairing, '\n')
+    print('\nOptimal matched base pairing positions in RNA sequence:\n{}\n'.format(optimal_base_pairing))
     print(sequence)
     print(display_pairing(sequence, optimal_base_pairing))
     print('\nNumber of base pairs found:', len(optimal_base_pairing))
