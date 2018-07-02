@@ -46,6 +46,15 @@ def subseq_score(i, j, sequence, h_loop=1):
     return max(unpaired, max(paired))
 
 
+def flatten(container):
+    for config in container:
+        if isinstance(config, (list)):
+            for j in flatten(config):
+                yield j
+        else:
+            yield config
+
+
 def matched_base_pairs(i, j, sequence, completed_pair_matrix, h_loop=1):
     """
     Determiens proper base pairing based on a completed dynamic scoring matrix created by subseq_score
@@ -65,7 +74,7 @@ def matched_base_pairs(i, j, sequence, completed_pair_matrix, h_loop=1):
                 matched_positions.append((i, j))
             matched = matched_base_pairs(i+1, j-1, sequence, completed_pair_matrix, h_loop=h_loop)
             if matched:  # No empty lists
-                matched_positions.extend(matched)
+                matched_positions.append(matched)
         else:
             # Case 3, find k in range (i,j) and get list of paired of comp bases then join them
             for k in range(i, j-1):
@@ -73,11 +82,13 @@ def matched_base_pairs(i, j, sequence, completed_pair_matrix, h_loop=1):
                     first_half = matched_base_pairs(i, k, sequence, completed_pair_matrix, h_loop=h_loop)
                     second_half = matched_base_pairs(k+1, j, sequence, completed_pair_matrix, h_loop=h_loop)
                     if first_half and second_half:  # Check if list is empty
-                        matched_positions.extend((first_half, second_half))
+                        print(first_half)
+                        print(second_half)
+                        matched_positions.extend(first_half + second_half)
                 # Once we have found that k value we break from the loop
                 # break
 
-    return matched_positions
+    return list(flatten(matched_positions))
 
 
 def backtrack(sequence, completed_pair_matrix, h_loop=1):
@@ -128,6 +139,7 @@ def nussinov(sequence, h_loop=1):
     print('Scoring matrix completed.\nBeginning backtracking...')
     # Find number of optimal solutions
     pair_list = backtrack(seq, pair_matrix)
+
     print('Backtracking completed\nNumber of possible solutions:', optimal_solutions(pair_list),
           '\nDisplaying first solution\n')
 
