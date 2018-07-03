@@ -20,7 +20,7 @@ def count_nested_tuples(nested_tuple):
     """
     num_obj = 0
     for ele in nested_tuple:
-        if len(ele) > 1:
+        if type(ele) == tuple:
             num_obj += count_nested_tuples(ele)
         else:
             num_obj += 1
@@ -78,10 +78,22 @@ def hiercluster(distance_dict):
 
 
 df = read_distance_matrix('small-distances.txt')
-# showtree(hiercluster(df))
+print(df)
+
+nt = ((('A', 'B'), 'C'), ('D', 'E'))
+# print(count_nested_tuples(nt))
+
+showtree(hiercluster(df))
+
+
+
+
+
+
+
 
 class HierTree:
-
+    pass
 
 class Cluster:
     def __init__(self, name, left, right):
