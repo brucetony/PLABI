@@ -92,15 +92,6 @@ def display_pairing(sequence, optimal_pair_list):
     return ''.join(pair_display)
 
 
-def optimal_solutions(list_of_matches):
-    num_opt_pairings = 0
-    optimal_size = len(max(list_of_matches, key=len))
-    for pair in list_of_matches:
-        if len(pair) == optimal_size:
-            num_opt_pairings += 1
-    return num_opt_pairings
-
-
 def nussinov(sequence, h_loop=1):
     # Initialize dynamic programming matrix
     N = len(sequence)
